@@ -1,7 +1,6 @@
 <script>
   import { useQuestionState } from "$lib/states/questionState.svelte.js";
   let questionState = useQuestionState();
-
   let { question } = $props();
 </script>
 

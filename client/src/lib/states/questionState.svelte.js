@@ -1,35 +1,31 @@
 import { browser } from "$app/environment";
+import * as questionApi from "$lib/apis/questions-api.js";
 
-const QUESTIONS_KEY = "questions";
-let initialQuestions = [];
+let questionState = $state([]);
 
-if (browser && localStorage.hasOwnProperty(QUESTIONS_KEY)) {
-  initialQuestions = JSON.parse(localStorage.getItem(QUESTIONS_KEY));
+if (browser) {
+  questionState = await questionApi.readQuestions();
 }
-
-let questionState = $state(initialQuestions);
-
-const saveQuestions = () => {
-  localStorage.setItem(QUESTIONS_KEY, JSON.stringify(questionState));
-};
 
 const useQuestionState = () => {
   return {
     get questions() {
       return questionState;
     },
-    add: (question) => {
-      questionState.push(question);
-      saveQuestions();
+    add: async (question) => {
+      const newQuestion = await questionApi.createQuestion(question.title, question.text);
+      questionState.push(newQuestion);
     },
-    remove: (id) => {
-      questionState = questionState.filter((q) => q.id !== id);
-      saveQuestions();
+    remove: async (id) => {
+      const removed = await questionApi.deleteQuestion(id);
+      questionState = questionState.filter((q) => q.id !== removed.id);
     },
-    upvote: (id) => {
-      const question = questionState.find((q) => q.id === id);
-      question.upvotes++;
-      saveQuestions();
+    upvote: async (id) => {
+      const updated = await questionApi.upvoteQuestion(id);
+      const index = questionState.findIndex((q) => q.id === id);
+      if (index !== -1) {
+        questionState[index] = updated;
+      }
     },
   };
 };

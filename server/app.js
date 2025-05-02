@@ -1,8 +1,8 @@
-import { Hono } from "@hono/hono";
-import { logger } from "@hono/hono/logger";
+import { Hono } from "jsr:@hono/hono@4.6.5";
+import { cors } from "jsr:@hono/hono@4.6.5/cors";
 
 const app = new Hono();
-app.use("/*", logger());
+app.use("/*", cors());
 
 // GET /courses
 app.get("/courses", (c) => {
@@ -33,39 +33,38 @@ app.post("/courses", async (c) => {
   return c.json( course );
 });
 
-// GET /courses/:id/topics
-app.get("/courses/:id/topics", (c) => {
-  const topics = {
-    "topics": [
-      { "id": 1, "name": "Topic 1" },
-      { "id": 2, "name": "Topic 2" }
-    ],
-  };
-  return c.json(topics);
+let questions = [];
+
+app.get("/courses/:id/questions", (c) => {
+  return c.json(questions);
 });
 
-// GET /courses/:cId/topics/:tId/posts
-app.get("/courses/:cId/topics/:tId/posts", (c) => {
-  const posts = {
-    "posts": [
-      {"id": 1, "title": "Post 1" },
-      {"id": 2, "title": "Post 2" }
-    ],
+app.post("/courses/:id/questions", async (c) => {
+  const body = await c.req.json();
+  const newQuestion = {
+    id: questions.length + 1,
+    title: body.title,
+    text: body.text,
+    upvotes: 0,
   };
-  return c.json(posts);
+  questions.push(newQuestion);
+  return c.json(newQuestion);
 });
 
-// GET /courses/:cId/topics/:tId/posts/:pId
-app.get("/courses/:cId/topics/:tId/posts/:pId", (c) => {
-  const pId = Number(c.req.param("pId"));
-  const post = {
-    post: { "id": pId, "title": "Post Title" },
-    answers: [
-      { "id": 1, "content": "Answer 1" },
-      { "id": 2, "content": "Answer 2" },
-    ],
-  };
-  return c.json(post);
+app.post("/courses/:id/questions/:qId/upvote", async (c) => {
+  const qId = Number(c.req.param("qId"));
+  const question = questions.find((q) => q.id === qId);
+  if (question) {
+    question.upvotes += 1;
+  }
+  return c.json(question);
+});
+
+app.delete("/courses/:id/questions/:qId", async (c) => {
+  const qId = Number(c.req.param("qId"));
+  const deleted = questions.find((q) => q.id === qId);
+  questions = questions.filter((q) => q.id !== qId);
+  return c.json(deleted);
 });
 
 export default app;
