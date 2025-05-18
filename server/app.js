@@ -1,17 +1,26 @@
+// importing all functions from bookRepository.js as bookRepository
+import * as bookRepository from "./bookRepository.js";
+
 import { Hono } from "jsr:@hono/hono@4.6.5";
 import { cors } from "jsr:@hono/hono@4.6.5/cors";
 import postgres from "postgres";
-
-// importing all functions from bookRepository.js as bookRepository
-import * as bookRepository from "./bookRepository.js";
+import { z } from "zod";
+import { zValidator } from "zValidator";
 
 const app = new Hono();
 app.use("/*", cors());
 
-const sql = postgres({
-  max: 2,
-  max_lifetime: 10,
+const sql = postgres();
+
+const courseSchema = z.object({
+  name: z.string().min(3),
 });
+
+const questionSchema = z.object({
+  title: z.string().min(3),
+  text: z.string().min(3),
+});
+
 
 app.post("/", async (c) => {
   const { query } = await c.req.json();
@@ -112,6 +121,61 @@ app.delete("/courses/:id/questions/:qId", async (c) => {
   const deleted = questions.find((q) => q.id === qId);
   questions = questions.filter((q) => q.id !== qId);
   return c.json(deleted);
+});
+
+
+app.get("/api/courses", async (c) => {
+  const courses = await sql`SELECT * FROM courses`;
+  return c.json(courses);
+});
+
+app.get("/api/courses/:id", async (c) => {
+  const id = c.req.param("id");
+  const course = await sql`SELECT * FROM courses WHERE id = ${id}`;
+  return c.json(course[0]);
+});
+
+app.post("/api/courses", zValidator("json", courseSchema), async (c) => {
+  const body = await c.req.valid("json");
+  const course = await sql`INSERT INTO courses (name) VALUES (${body.name}) RETURNING *`;
+  return c.json(course[0]);
+});
+
+app.delete("/api/courses/:id", async (c) => {
+  const id = c.req.param("id");
+  const deleted = await sql`DELETE FROM courses WHERE id = ${id} RETURNING *`;
+  return c.json(deleted[0]);
+});
+
+app.get("/api/courses/:id/questions", async (c) => {
+  const courseId = c.req.param("id");
+  const questions = await sql`SELECT * FROM questions WHERE course_id = ${courseId}`;
+  return c.json(questions);
+});
+
+app.post("/api/courses/:id/questions", zValidator("json", questionSchema), async (c) => {
+  const courseId = c.req.param("id");
+  const body = await c.req.valid("json");
+  const question = await sql`
+    INSERT INTO questions (course_id, title, text)
+    VALUES (${courseId}, ${body.title}, ${body.text})
+    RETURNING *`;
+  return c.json(question[0]);
+});
+
+app.post("/api/courses/:id/questions/:qId/upvote", async (c) => {
+  const qId = c.req.param("qId");
+  const updated = await sql`
+    UPDATE questions SET upvotes = upvotes + 1
+    WHERE id = ${qId}
+    RETURNING *`;
+  return c.json(updated[0]);
+});
+
+app.delete("/api/courses/:id/questions/:qId", async (c) => {
+  const qId = c.req.param("qId");
+  const deleted = await sql`DELETE FROM questions WHERE id = ${qId} RETURNING *`;
+  return c.json(deleted[0]);
 });
 
 export default app;
