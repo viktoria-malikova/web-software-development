@@ -1,5 +1,5 @@
 <script>
-  import Questions from "$lib/components/Questions.svelte";
+  import SqlInterface from "$lib/components/SqlInterface.svelte";
 </script>
 
-<Questions />
+<SqlInterface />
