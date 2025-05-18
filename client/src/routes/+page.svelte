@@ -1,5 +1,2 @@
-<script>
-  import SQlInterface from "$lib/components/SQlInterface.svelte";
-</script>
+<p>Hello world!</p>
 
-<SQlInterface />
