@@ -8,7 +8,10 @@ import * as bookRepository from "./bookRepository.js";
 const app = new Hono();
 app.use("/*", cors());
 
-const sql = postgres();
+const sql = postgres({
+  max: 2,
+  max_lifetime: 10,
+});
 
 app.post("/", async (c) => {
   const { query } = await c.req.json();
