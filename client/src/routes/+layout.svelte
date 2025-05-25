@@ -1,23 +1,18 @@
 <script>
-  let { children } = $props();
+    import "../app.css"
+	let { children } = $props();
 </script>
 
-<header>
-  <h1>My application</h1>
+<header class="w-full bg-primary-500 text-white p-4">
+	<nav class="container mx-auto flex justify-between items-center">
+		<h1 class="text-2xl font-bold">My App</h1>
+		<ul class="flex gap-6">
+			<li><a href="/" class="hover:underline">Home</a></li>
+			<li><a href="/courses" class="hover:underline">Courses</a></li>
+		</ul>
+	</nav>
 </header>
 
-<nav>
-  <ul>
-    <li><a href="/">Home</a></li>
-    <li><a href="/about">About</a></li>
-    <li><a href="/contact">Contact</a></li>
-  </ul>
-</nav>
-
-<div>
-  {@render children()}
-</div>
-
-<footer>
-  <p>My application is cool.</p>
-</footer>
+<main class="container mx-auto p-6">
+	{@render children()}
+</main>
